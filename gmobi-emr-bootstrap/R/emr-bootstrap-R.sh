@@ -28,11 +28,11 @@ error_msg ()
 }
 
 # get input parameters
-RSTUDIO=false
+RSTUDIO=true
 USER="rstudio"
 USERPW="rstudio"
 UPDATER=false
-RSTUDIOPORT=80
+RSTUDIOPORT=8787
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--rstudio)
@@ -87,8 +87,7 @@ sudo sh -c "echo '$USERPW' | passwd $USER --stdin"
 if [ "$IS_MASTER" = true -a "$RSTUDIO" = true ]; then
   # install Rstudio server
   # please check and update for latest RStudio version
-  aws s3 cp s3://gmobi-emr-bootstrap/R/rstudio-server-rhel-0.99.893-x86_64.rpm
-  sudo yum install --nogpgcheck -y rstudio-server-rhel-0.99.893-x86_64.rpm
+  sudo yum install --nogpgcheck -y R/rstudio-server-rhel-0.99.893-x86_64.rpm
 
   # change port - 8787 will not work for many companies
   sudo sh -c "echo 'www-port=$RSTUDIOPORT' >> /etc/rstudio/rserver.conf"
