@@ -14,13 +14,6 @@
 # --user-pw - sets user-pw for user USER, default "rstudio"
 # --rstudio-port - sets rstudio port, default 80
 
-# check for master node
-IS_MASTER=true
-if [ -f /mnt/var/lib/info/instance.json ]
-then
-	IS_MASTER=`cat /mnt/var/lib/info/instance.json | tr -d '\n ' | sed -n 's|.*\"isMaster\":\([^,]*\).*|\1|p'`
-fi
-
 # error message
 error_msg ()
 {
@@ -84,10 +77,10 @@ sudo sh -c "echo '$USERPW' | passwd $USER --stdin"
 
 # install rstudio
 # only run if master node
-if [ "$IS_MASTER" = true -a "$RSTUDIO" = true ]; then
+if [ "$RSTUDIO" = true ]; then
   # install Rstudio server
   # please check and update for latest RStudio version
-  sudo yum install --nogpgcheck -y R/rstudio-server-rhel-0.99.893-x86_64.rpm
+  sudo yum install --nogpgcheck -y /home/hadoop/R/rstudio-server-rhel-0.99.893-x86_64.rpm
 
   # change port - 8787 will not work for many companies
   sudo sh -c "echo 'www-port=$RSTUDIOPORT' >> /etc/rstudio/rserver.conf"
@@ -123,6 +116,16 @@ export HADOOP_HOME=/usr/lib/hadoop
 export SPARK_HOME=/usr/lib/spark
 ' >> /etc/profile
 EOF1
+
+# set R environment variables
+sudo su << EOF1
+echo '
+HADOOP_HOME=/usr/lib/hadoop
+SPARK_HOME=/usr/lib/spark
+HADOOP_USER_NAME=hadoop
+' >> /usr/lib64/R/etc/Renviron
+EOF1
+
 sudo sh -c "source /etc/profile"
 
 # RCurl package needs curl-config unix package
@@ -139,6 +142,6 @@ EOF
 # put sparkR into .libPaths
 sudo su << EOF1
 echo '
-.libPaths(new = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib", .libPaths())))
+.libPaths(new = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib"), .libPaths()))
 ' >> /usr/lib64/R/etc/Rprofile.site
 EOF1
