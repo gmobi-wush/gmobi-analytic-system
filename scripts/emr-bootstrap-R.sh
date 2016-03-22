@@ -1,17 +1,11 @@
 #/bin/bash
 
 # AWS EMR bootstrap script
-# for installing open-source R (www.r-project.org) with RHadoop packages and RStudio on AWS EMR
+# for installing open-source R (www.r-project.org) with sparkR and RStudio on AWS EMR
 #
-# tested with AMI 3.2.1 (hadoop 2.4.0)
-#
-# schmidbe@amazon.de
-# 24. September 2014
-#
-# Wush Wu wush.wu@generalmobi.com
-# Copyright Gmobi Inc.
+# Original work Copyright (c) 2014 schmidbe@amazon.de
+# Modified work Copyright (c) 2016 Gmobi Inc.
 ##############################
-
 
 # Usage:
 # --rstudio - installs rstudio-server default false
@@ -126,20 +120,14 @@ fi
 # set unix environment variables
 sudo su << EOF1
 echo '
-export HADOOP_HOME=/home/hadoop
-export HADOOP_CMD=/home/hadoop/bin/hadoop
-export HADOOP_STREAMING=/home/hadoop/contrib/streaming/hadoop-streaming.jar
-export JAVA_HOME=/usr/java/latest/jre
+export HADOOP_HOME=/usr/lib/hadoop
+export SPARK_HOME=/usr/lib/spark
 ' >> /etc/profile
 EOF1
 sudo sh -c "source /etc/profile"
 
-
 # RCurl package needs curl-config unix package
 sudo yum install -y curl-devel
-
-# fix java binding - R and packages have to be compiled with the same java version as hadoop
-sudo R CMD javareconf
 
 # install required packages
 sudo R --no-save << EOF
@@ -148,3 +136,10 @@ repos="http://mirror.bjtu.edu.cn/cran", INSTALL_opts=c('--byte-compile') )
 # here you can add your required packages which should be installed on ALL nodes
 # install.packages(c(''), repos="http://mirror.bjtu.edu.cn/cran", INSTALL_opts=c('--byte-compile') )
 EOF
+
+# put sparkR into .libPaths
+sudo su << EOF1
+echo '
+.libPaths(new = c(file.path(Sys.getenv("SPARK_HOME"), "R", "lib", .libPaths())))
+' >> /usr/lib64/R/etc/Rprofile.site
+EOF1
